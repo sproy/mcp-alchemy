@@ -45,13 +45,14 @@ def get_engine():
     host = os.environ['DB_HOST']
     database = os.environ['DB_DATABASE']
     password = os.environ.get('DB_PASSWORD', '')
-    
+
     connection_string = f"{engine}://{user}:{password}@{host}/{database}" if password else f"{engine}://{host}/{database}"
     return create_engine(connection_string)
 
-# Create engine once at module level for docstring
+# Create engine and connect once to get version info
 _engine = get_engine()
-_db_info = f"Database: {_engine.dialect.name} version {'.'.join(str(x) for x in _engine.dialect.server_version_info)}"
+with _engine.connect() as conn:
+    _db_info = f"Database: {_engine.dialect.name} version {'.'.join(str(x) for x in _engine.dialect.server_version_info)}"
 
 mcp = FastMCP("MCP Alchemy")
 
@@ -81,7 +82,6 @@ def table_columns(table_names: list[str]) -> str:
 
 @mcp.tool()
 def execute_query(query: str, params: Optional[dict] = None) -> str:
-    f"""Execute a SQL query and return results in a readable format. {_db_info}"""
     params = params or {}
     try:
         engine = get_engine()
@@ -107,6 +107,8 @@ def execute_query(query: str, params: Optional[dict] = None) -> str:
 
     except Exception as e:
         return f"Error: {str(e)}"
+
+execute_query.__doc__ = f"""Execute a SQL query and return results in a readable format. {_db_info}"""
 
 if __name__ == "__main__":
     mcp.run()
