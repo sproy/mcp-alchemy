@@ -73,8 +73,8 @@ def filter_table_names(q: str) -> str:
     return ", ".join(x for x in inspector.get_table_names() if q in x)
 
 @mcp.tool()
-def table_columns(table_names: list[str]) -> str:
-    """Returns information of table columns and relations for the given list of table_names"""
+def inspect_tables(table_names: list[str]) -> str:
+    """Returns schema and relation information for the given tables"""
     engine = get_engine()
     inspector = inspect(engine)
 
@@ -95,7 +95,7 @@ def execute_query(query: str, params: Optional[dict] = None) -> str:
                 output.append(f"Query: {query}\n")
 
                 if rows:
-                    table = tabulate(rows, headers=columns, tablefmt='grid')
+                    table = tabulate(rows, headers=columns, tablefmt='simple')
                     output.append(table)
                     output.append(f"\nResult: {len(rows)} rows")
                 elif result.rowcount > 0:
