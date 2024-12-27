@@ -39,7 +39,7 @@ def format_table_schemas(engine):
 
     return "\n".join(format_table_schema(inspector, table_name) for table_name in table_names)
 
-def get_engine():
+def get_engine(readonly=True):
     engine = os.environ['DB_ENGINE']
     user = os.environ['DB_USER']
     host = os.environ['DB_HOST']
@@ -47,10 +47,11 @@ def get_engine():
     password = os.environ.get('DB_PASSWORD', '')
 
     connection_string = f"{engine}://{user}:{password}@{host}/{database}" if password else f"{engine}://{host}/{database}"
-    return create_engine(connection_string)
+    return create_engine(connection_string, isolation_level='AUTOCOMMIT' if not readonly else 'SERIALIZABLE',
+                         execution_options={'readonly': readonly})
 
 # Create engine and connect once to get version info
-_engine = get_engine()
+_engine = get_engine(readonly=True)
 with _engine.connect() as conn:
     _db_info = f"Database: {_engine.dialect.name} version {'.'.join(str(x) for x in _engine.dialect.server_version_info)}"
 
@@ -84,26 +85,25 @@ def inspect_tables(table_names: list[str]) -> str:
 def execute_query(query: str, params: Optional[dict] = None) -> str:
     params = params or {}
     try:
-        engine = get_engine()
+        engine = get_engine(readonly=False)
+
         with engine.connect() as connection:
-            with connection.begin():
-                result = connection.execute(text(query), params)
+            result = connection.execute(text(query), params)
+
+            output = []
+            output.append(f"Query: {query}\n")
+
+            if result.returns_rows:
                 columns = result.keys()
                 rows = result.fetchall()
-
-                output = []
-                output.append(f"Query: {query}\n")
-
                 if rows:
                     table = tabulate(rows, headers=columns, tablefmt='simple')
                     output.append(table)
                     output.append(f"\nResult: {len(rows)} rows")
-                elif result.rowcount > 0:
-                    output.append(f"Success: {result.rowcount} rows affected")
-                else:
-                    output.append("Success: Query executed")
+            else:
+                output.append(f"Success: {result.rowcount} rows affected")
 
-                return "\n".join(output)
+            return "\n".join(output)
 
     except Exception as e:
         return f"Error: {str(e)}"
