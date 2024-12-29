@@ -15,27 +15,30 @@ def get_engine(readonly=True):
     return create_engine(connection_string, isolation_level='AUTOCOMMIT' if not readonly else 'SERIALIZABLE',
                          execution_options={'readonly': readonly})
 
+# Get database connection info first
+engine = get_engine(readonly=True)
+with engine.connect() as conn:
+    db_info = (f"Connected to {engine.dialect.name} "
+              f"version {'.'.join(str(x) for x in engine.dialect.server_version_info)} "
+              f"database '{os.environ['DB_DATABASE']}' on {os.environ['DB_HOST']} "
+              f"as user '{os.environ['DB_USER']}'")
+
 mcp = FastMCP("MCP Alchemy")
 
-@mcp.tool()
+@mcp.tool(description=f"Return all table names in the database separated by comma. {db_info}")
 def all_table_names() -> str:
-    """Return all table names in the database separated by comma."""
     engine = get_engine()
     inspector = inspect(engine)
-
     return ", ".join(inspector.get_table_names())
 
-@mcp.tool()
+@mcp.tool(description=f"Return all table names in the database containing the substring 'q' separated by comma. {db_info}")
 def filter_table_names(q: str) -> str:
-    """Return all table names in the database containing the substring 'q' separated by comma."""
     engine = get_engine()
     inspector = inspect(engine)
-
     return ", ".join(x for x in inspector.get_table_names() if q in x)
 
-@mcp.tool()
+@mcp.tool(description=f"Returns schema and relation information for the given tables. {db_info}")
 def get_schema_definitions(table_names: list[str]) -> str:
-    """Returns schema and relation information for the given tables."""
     engine = get_engine()
     inspector = inspect(engine)
 
@@ -70,9 +73,8 @@ def get_schema_definitions(table_names: list[str]) -> str:
 
     return "\n".join(format_table_schema(inspector, table_name) for table_name in table_names)
 
-@mcp.tool()
+@mcp.tool(description=f"Execute a SQL query and return results in a readable format. {db_info}")
 def execute_query(query: str, params: Optional[dict] = None) -> str:
-    """Execute a SQL query and return results in a readable format."""
     params = params or {}
     execute_query_max_chars = int(os.environ.get('EXECUTE_QUERY_MAX_CHARS', 4000))
 
@@ -104,20 +106,6 @@ def execute_query(query: str, params: Optional[dict] = None) -> str:
 
     except Exception as e:
         return f"Error: {str(e)}"
-
-# Get database connection info for docstrings
-engine = get_engine(readonly=True)
-with engine.connect() as conn:
-    db_info = (f"Connected to {engine.dialect.name} "
-              f"version {'.'.join(str(x) for x in engine.dialect.server_version_info)} "
-              f"database '{os.environ['DB_DATABASE']}' on {os.environ['DB_HOST']} "
-              f"as user '{os.environ['DB_USER']}'")
-
-# Update function docstrings with database info
-all_table_names.__doc__ = f"{all_table_names.__doc__} {db_info}"
-filter_table_names.__doc__ = f"{filter_table_names.__doc__} {db_info}"
-get_schema_definitions.__doc__ = f"{get_schema_definitions.__doc__} {db_info}"
-execute_query.__doc__ = f"{execute_query.__doc__} {db_info}"
 
 if __name__ == "__main__":
     mcp.run()
