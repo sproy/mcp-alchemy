@@ -1,11 +1,10 @@
 import os, json, hashlib
 from typing import Optional
-
+from datetime import datetime, date
 from mcp.server.fastmcp import FastMCP
 from sqlalchemy import create_engine, inspect, text
-from tabulate import tabulate
 
-### Utility functions ###
+### Database ###
 
 def get_engine(readonly=True):
     engine = os.environ['DB_ENGINE']
@@ -14,7 +13,6 @@ def get_engine(readonly=True):
     database = os.environ['DB_DATABASE']
     password = os.environ.get('DB_PASSWORD', '')
     connection_string = f"{engine}://{user}:{password}@{host}/{database}" if password else f"{engine}://{host}/{database}"
-
     return create_engine(connection_string, isolation_level='AUTOCOMMIT', execution_options={'readonly': readonly})
 
 def get_db_info():
@@ -31,7 +29,7 @@ DB_INFO = get_db_info()
 EXECUTE_QUERY_MAX_CHARS = int(os.environ.get('EXECUTE_QUERY_MAX_CHARS', 4000))
 CLAUDE_FILES_PATH = os.environ.get('CLAUDE_LOCAL_FILES_PATH')
 
-### MCP tools ###
+### MCP ###
 
 mcp = FastMCP("MCP Alchemy")
 
@@ -63,10 +61,8 @@ def get_schema_definitions(table_names: list[str]) -> str:
             if "comment" in column:
                 del column["comment"]
             name = column.pop("name")
-
             column_parts = (["primary key"] if name in primary_keys else []) + [str(
                 column.pop("type"))] + [k if k in show_key_only else f"{k}={v}" for k, v in column.items() if v]
-
             result.append(f"    {name}: " + ", ".join(column_parts))
 
         # Process relationships
@@ -82,73 +78,86 @@ def get_schema_definitions(table_names: list[str]) -> str:
 
     engine = get_engine()
     inspector = inspect(engine)
-
     return "\n".join(format(inspector, table_name) for table_name in table_names)
 
 def execute_query_description():
-    description_parts = [
-        f"Execute a SQL query and return results in a readable format. Results will be truncated after"
-        f"{EXECUTE_QUERY_MAX_CHARS} characters."
+    parts = [
+        f"Execute a SQL query and return results in a readable format. Results will be truncated after {EXECUTE_QUERY_MAX_CHARS} characters."
     ]
-
     if CLAUDE_FILES_PATH:
-        description_parts.append(
-            "Claude Desktop may fetch the full result set via an url for analysis and artifacts.")
-
-    description_parts.append(DB_INFO)
-
-    return " ".join(description_parts)
+        parts.append("Claude Desktop may fetch the full result set via an url for analysis and artifacts.")
+    parts.append(DB_INFO)
+    return " ".join(parts)
 
 @mcp.tool(description=execute_query_description())
 def execute_query(query: str, params: Optional[dict] = None) -> str:
-    def claude_local_files(rows):
-        CLAUDE_FILES_PATH = os.environ.get('CLAUDE_LOCAL_FILES_PATH')
+    def format_value(val):
+        """Format a value for display, handling None and datetime types"""
+        if val is None:
+            return "NULL"
+        if isinstance(val, (datetime, date)):
+            return val.isoformat()
+        return str(val)
+
+    def format_results(columns, rows):
+        """Format rows in a clean vertical format"""
+        output = []
+        for i, row in enumerate(rows, 1):
+            output.append(f"{i}. row")
+            for col, val in zip(columns, row):
+                output.append(f"{col}: {format_value(val)}")
+            output.append("")
+        return "\n".join(output)
+
+    def save_full_results(rows, columns):
+        """Save complete result set for Claude if configured"""
         if not CLAUDE_FILES_PATH:
             return ""
 
-        data = [list(row) for row in rows]
+        def serialize_row(row):
+            return [format_value(val) for val in row]
+
+        data = [serialize_row(row) for row in rows]
         file_hash = hashlib.sha256(json.dumps(data).encode()).hexdigest()
         file_name = f"{file_hash}.json"
-        file_path = os.path.join(CLAUDE_FILES_PATH, file_name)
 
-        with open(file_path, 'w') as f:
+        with open(os.path.join(CLAUDE_FILES_PATH, file_name), 'w') as f:
             json.dump(data, f)
 
         return (f"\nFull result set url: https://cdn.jsdelivr.net/pyodide/claude-local-files/{file_name}"
-                " (format: [[row1_value1, row1_value2, ...], [row2_value1, row2_value2, ...], ...])")
-
-    params = params or {}
+                " (format: [[row1_value1, row1_value2, ...], [row2_value1, row2_value2, ...], ...]])")
 
     try:
         engine = get_engine(readonly=False)
-
         with engine.connect() as connection:
-            result = connection.execute(text(query), params)
+            result = connection.execute(text(query), params or {})
 
-            if result.returns_rows:
-                columns = result.keys()
-                rows = result.fetchall()
-                if rows:
-                    table = tabulate(rows, headers=columns, tablefmt='simple')
-                    claude_files_message = claude_local_files(rows)
-
-                    if len(table) > EXECUTE_QUERY_MAX_CHARS:
-                        # Find the last complete row that fits within the limit
-                        lines = table.split('\n')
-                        total_chars = 0
-                        for i, line in enumerate(lines):
-                            total_chars += len(line) + 1  # +1 for newline
-                            if total_chars > EXECUTE_QUERY_MAX_CHARS:
-                                table = '\n'.join(lines[:i])
-                                message = f"{table}\n\nResult: {len(rows)} rows (output truncated)"
-
-                                return message + claude_files_message
-                    else:
-                        return f"{table}\n\nResult: {len(rows)} rows" + claude_files_message
-                return "No rows returned"
-            else:
+            if not result.returns_rows:
                 return f"Success: {result.rowcount} rows affected"
 
+            columns = result.keys()
+            all_rows = result.fetchall()
+
+            if not all_rows:
+                return "No rows returned"
+
+            # Format results and handle truncation if needed
+            displayed_rows = all_rows
+            output = format_results(columns, displayed_rows)
+
+            while len(output) > EXECUTE_QUERY_MAX_CHARS and len(displayed_rows) > 1:
+                displayed_rows = displayed_rows[:-1]
+                output = format_results(columns, displayed_rows)
+
+            # Add summary and full results link
+            output += f"\nResult: {len(all_rows)} rows"
+            if len(displayed_rows) < len(all_rows):
+                output += " (output truncated)"
+
+            if full_results := save_full_results(all_rows, columns):
+                output += full_results
+
+            return output
     except Exception as e:
         return f"Error: {str(e)}"
 
