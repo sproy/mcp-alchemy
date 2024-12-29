@@ -5,51 +5,57 @@ from mcp.server.fastmcp import FastMCP
 from sqlalchemy import create_engine, inspect, text
 from tabulate import tabulate
 
+### Utility functions ###
+
 def get_engine(readonly=True):
     engine = os.environ['DB_ENGINE']
     user = os.environ['DB_USER']
     host = os.environ['DB_HOST']
     database = os.environ['DB_DATABASE']
     password = os.environ.get('DB_PASSWORD', '')
-
     connection_string = f"{engine}://{user}:{password}@{host}/{database}" if password else f"{engine}://{host}/{database}"
-    return create_engine(connection_string, isolation_level='AUTOCOMMIT' if not readonly else 'SERIALIZABLE',
-                         execution_options={'readonly': readonly})
 
-# Get database connection info first
-engine = get_engine(readonly=True)
-with engine.connect() as conn:
-    db_info = (f"Connected to {engine.dialect.name} "
-               f"version {'.'.join(str(x) for x in engine.dialect.server_version_info)} "
-               f"database '{os.environ['DB_DATABASE']}' on {os.environ['DB_HOST']} "
-               f"as user '{os.environ['DB_USER']}'")
+    return create_engine(connection_string, isolation_level='AUTOCOMMIT', execution_options={'readonly': readonly})
+
+def get_db_info():
+    engine = get_engine(readonly=True)
+    with engine.connect() as conn:
+        return (f"Connected to {engine.dialect.name} "
+                f"version {'.'.join(str(x) for x in engine.dialect.server_version_info)} "
+                f"database '{os.environ['DB_DATABASE']}' on {os.environ['DB_HOST']} "
+                f"as user '{os.environ['DB_USER']}'")
+
+### Constants ###
+
+DB_INFO = get_db_info()
+EXECUTE_QUERY_MAX_CHARS = int(os.environ.get('EXECUTE_QUERY_MAX_CHARS', 4000))
+CLAUDE_FILES_PATH = os.environ.get('CLAUDE_LOCAL_FILES_PATH')
+
+### MCP tools ###
 
 mcp = FastMCP("MCP Alchemy")
 
-@mcp.tool(description=f"Return all table names in the database separated by comma. {db_info}")
+@mcp.tool(description=f"Return all table names in the database separated by comma. {DB_INFO}")
 def all_table_names() -> str:
     engine = get_engine()
     inspector = inspect(engine)
     return ", ".join(inspector.get_table_names())
 
 @mcp.tool(
-    description=f"Return all table names in the database containing the substring 'q' separated by comma. {db_info}"
+    description=f"Return all table names in the database containing the substring 'q' separated by comma. {DB_INFO}"
 )
 def filter_table_names(q: str) -> str:
     engine = get_engine()
     inspector = inspect(engine)
     return ", ".join(x for x in inspector.get_table_names() if q in x)
 
-@mcp.tool(description=f"Returns schema and relation information for the given tables. {db_info}")
+@mcp.tool(description=f"Returns schema and relation information for the given tables. {DB_INFO}")
 def get_schema_definitions(table_names: list[str]) -> str:
-    engine = get_engine()
-    inspector = inspect(engine)
-
-    def format_table_schema(inspector, table_name):
+    def format(inspector, table_name):
         columns = inspector.get_columns(table_name)
         foreign_keys = inspector.get_foreign_keys(table_name)
         primary_keys = set(inspector.get_pk_constraint(table_name)["constrained_columns"])
-        output = f"{table_name}:\n"
+        result = [f"{table_name}:"]
 
         # Process columns
         show_key_only = {"nullable", "autoincrement"}
@@ -61,33 +67,56 @@ def get_schema_definitions(table_names: list[str]) -> str:
             column_parts = (["primary key"] if name in primary_keys else []) + [str(
                 column.pop("type"))] + [k if k in show_key_only else f"{k}={v}" for k, v in column.items() if v]
 
-            output += f"    {name}: " + ", ".join(column_parts) + "\n"
+            result.append(f"    {name}: " + ", ".join(column_parts))
 
         # Process relationships
         if foreign_keys:
-            output += "\n    Relationships:\n"
+            result.extend(["", "    Relationships:"])
             for fk in foreign_keys:
                 constrained_columns = ", ".join(fk['constrained_columns'])
                 referred_table = fk['referred_table']
                 referred_columns = ", ".join(fk['referred_columns'])
-                output += f"      {constrained_columns} -> {referred_table}.{referred_columns}\n"
+                result.append(f"      {constrained_columns} -> {referred_table}.{referred_columns}")
 
-        return output
+        return "\n".join(result)
 
-    return "\n".join(format_table_schema(inspector, table_name) for table_name in table_names)
+    engine = get_engine()
+    inspector = inspect(engine)
 
-# Build dynamic description based on environment
-execute_query_max_chars = int(os.environ.get('EXECUTE_QUERY_MAX_CHARS', 4000))
-claude_files_path = os.environ.get('CLAUDE_LOCAL_FILES_PATH')
+    return "\n".join(format(inspector, table_name) for table_name in table_names)
 
-base_desc = (f"Execute a SQL query and return results in a readable format. Results will be truncated after "
-             f"{execute_query_max_chars} characters. ")
+def execute_query_description():
+    description_parts = [
+        f"Execute a SQL query and return results in a readable format. Results will be truncated after"
+        f"{EXECUTE_QUERY_MAX_CHARS} characters."
+    ]
 
-if claude_files_path:
-    base_desc += ("Claude Desktop artifacts can fetch the full result via a supplied url.")
+    if CLAUDE_FILES_PATH:
+        description_parts.append(
+            "Claude Desktop may fetch the full result set via an url for analysis and artifacts.")
 
-@mcp.tool(description=f"{base_desc}{db_info}")
+    description_parts.append(DB_INFO)
+
+    return " ".join(description_parts)
+
+@mcp.tool(description=execute_query_description())
 def execute_query(query: str, params: Optional[dict] = None) -> str:
+    def claude_local_files(rows):
+        CLAUDE_FILES_PATH = os.environ.get('CLAUDE_LOCAL_FILES_PATH')
+        if not CLAUDE_FILES_PATH:
+            return ""
+
+        data = [list(row) for row in rows]
+        file_hash = hashlib.sha256(json.dumps(data).encode()).hexdigest()
+        file_name = f"{file_hash}.json"
+        file_path = os.path.join(CLAUDE_FILES_PATH, file_name)
+
+        with open(file_path, 'w') as f:
+            json.dump(data, f)
+
+        return (f"\nFull result set url: https://cdn.jsdelivr.net/pyodide/claude-local-files/{file_name}"
+                " (format: [[row1_value1, row1_value2, ...], [row2_value1, row2_value2, ...], ...])")
+
     params = params or {}
 
     try:
@@ -101,34 +130,15 @@ def execute_query(query: str, params: Optional[dict] = None) -> str:
                 rows = result.fetchall()
                 if rows:
                     table = tabulate(rows, headers=columns, tablefmt='simple')
-                    # If CLAUDE_LOCAL_FILES_PATH is set, save full results
-                    claude_files_path = os.environ.get('CLAUDE_LOCAL_FILES_PATH')
-                    if claude_files_path:
-                        # Prepare data in the format [[col1, col2], [val1, val2], ...]
-                        data = [list(columns)]
-                        data.extend([list(row) for row in rows])
+                    claude_files_message = claude_local_files(rows)
 
-                        # Create SHA256 hash of the data
-                        data_str = json.dumps(data)
-                        file_hash = hashlib.sha256(data_str.encode()).hexdigest()
-                        file_name = f"{file_hash}.json"
-                        file_path = os.path.join(claude_files_path, file_name)
-
-                        # Save the file
-                        with open(file_path, 'w') as f:
-                            json.dump(data, f)
-
-                        claude_files_message = f"\nFetch full result set here: https://cdn.jsdelivr.net/pyodide/claude-local-files/{file_name} (format: [[row1_value1, row1_value2, ...], [row2_value1, row2_value2, ...], ...])"
-                    else:
-                        claude_files_message = ""
-
-                    if len(table) > execute_query_max_chars:
+                    if len(table) > EXECUTE_QUERY_MAX_CHARS:
                         # Find the last complete row that fits within the limit
                         lines = table.split('\n')
                         total_chars = 0
                         for i, line in enumerate(lines):
                             total_chars += len(line) + 1  # +1 for newline
-                            if total_chars > execute_query_max_chars:
+                            if total_chars > EXECUTE_QUERY_MAX_CHARS:
                                 table = '\n'.join(lines[:i])
                                 message = f"{table}\n\nResult: {len(rows)} rows (output truncated)"
 
