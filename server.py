@@ -1,8 +1,9 @@
+import os, json, hashlib
+from typing import Optional
+
 from mcp.server.fastmcp import FastMCP
 from sqlalchemy import create_engine, inspect, text
 from tabulate import tabulate
-from typing import Optional
-import os
 
 def get_engine(readonly=True):
     engine = os.environ['DB_ENGINE']
@@ -106,9 +107,6 @@ def execute_query(query: str, params: Optional[dict] = None) -> str:
                         # If CLAUDE_LOCAL_FILES_PATH is set, save full results
                         claude_files_path = os.environ.get('CLAUDE_LOCAL_FILES_PATH')
                         if claude_files_path:
-                            import json
-                            import hashlib
-
                             # Prepare data in the format [[col1, col2], [val1, val2], ...]
                             data = [list(columns)]
                             data.extend([list(row) for row in rows])
