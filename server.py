@@ -84,9 +84,7 @@ base_desc = (f"Execute a SQL query and return results in a readable format. Resu
              f"{execute_query_max_chars} characters. ")
 
 if claude_files_path:
-    base_desc += (
-        "Claude Desktop artifacts can fetch the full result set formatted as [[columns], [row1_values], [row2_values], ...] via a supplied url."
-    )
+    base_desc += ("Claude Desktop artifacts can fetch the full result via a supplied url.")
 
 @mcp.tool(description=f"{base_desc}{db_info}")
 def execute_query(query: str, params: Optional[dict] = None) -> str:
@@ -103,24 +101,28 @@ def execute_query(query: str, params: Optional[dict] = None) -> str:
                 rows = result.fetchall()
                 if rows:
                     table = tabulate(rows, headers=columns, tablefmt='simple')
+                    # If CLAUDE_LOCAL_FILES_PATH is set, save full results
+                    claude_files_path = os.environ.get('CLAUDE_LOCAL_FILES_PATH')
+                    if claude_files_path:
+                        # Prepare data in the format [[col1, col2], [val1, val2], ...]
+                        data = [list(columns)]
+                        data.extend([list(row) for row in rows])
+
+                        # Create SHA256 hash of the data
+                        data_str = json.dumps(data)
+                        file_hash = hashlib.sha256(data_str.encode()).hexdigest()
+                        file_name = f"{file_hash}.json"
+                        file_path = os.path.join(claude_files_path, file_name)
+
+                        # Save the file
+                        with open(file_path, 'w') as f:
+                            json.dump(data, f)
+
+                        claude_files_message = f"\nFetch full result set here: https://cdn.jsdelivr.net/pyodide/claude-local-files/{file_name} (format: [[row1_value1, row1_value2, ...], [row2_value1, row2_value2, ...], ...])"
+                    else:
+                        claude_files_message = ""
+
                     if len(table) > execute_query_max_chars:
-                        # If CLAUDE_LOCAL_FILES_PATH is set, save full results
-                        claude_files_path = os.environ.get('CLAUDE_LOCAL_FILES_PATH')
-                        if claude_files_path:
-                            # Prepare data in the format [[col1, col2], [val1, val2], ...]
-                            data = [list(columns)]
-                            data.extend([list(row) for row in rows])
-
-                            # Create SHA256 hash of the data
-                            data_str = json.dumps(data)
-                            file_hash = hashlib.sha256(data_str.encode()).hexdigest()
-                            file_name = f"{file_hash}.json"
-                            file_path = os.path.join(claude_files_path, file_name)
-
-                            # Save the file
-                            with open(file_path, 'w') as f:
-                                json.dump(data, f)
-
                         # Find the last complete row that fits within the limit
                         lines = table.split('\n')
                         total_chars = 0
@@ -129,11 +131,10 @@ def execute_query(query: str, params: Optional[dict] = None) -> str:
                             if total_chars > execute_query_max_chars:
                                 table = '\n'.join(lines[:i])
                                 message = f"{table}\n\nResult: {len(rows)} rows (output truncated)"
-                                if claude_files_path:
-                                    message += f"\nArtifact fetch url: https://cdn.jsdelivr.net/pyodide/claude-local-files/{file_name}"
-                                return message
+
+                                return message + claude_files_message
                     else:
-                        return f"{table}\n\nResult: {len(rows)} rows"
+                        return f"{table}\n\nResult: {len(rows)} rows" + claude_files_message
                 return "No rows returned"
             else:
                 return f"Success: {result.rowcount} rows affected"
