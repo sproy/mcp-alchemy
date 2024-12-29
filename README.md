@@ -129,15 +129,7 @@ Add to your `claude_desktop_config.json`:
 git clone https://github.com/runekaagaard/mcp-alchemy.git
 ```
 
-2. Add
-
-## Requirements
-
-- Python 3.8+
-- SQLAlchemy
-- PyMySQL (for MySQL)
-- psycopg2 (for PostgreSQL)
-- Other database drivers as needed
+2. Add database to claude_desktop_config.json
 
 ## License
 
