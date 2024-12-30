@@ -7,21 +7,17 @@ from sqlalchemy import create_engine, inspect, text
 ### Database ###
 
 def get_engine(readonly=True):
-    engine = os.environ['DB_ENGINE']
-    user = os.environ['DB_USER']
-    host = os.environ['DB_HOST']
-    database = os.environ['DB_DATABASE']
-    password = os.environ.get('DB_PASSWORD', '')
-    connection_string = f"{engine}://{user}:{password}@{host}/{database}" if password else f"{engine}://{host}/{database}"
+    connection_string = os.environ['DB_URL']
     return create_engine(connection_string, isolation_level='AUTOCOMMIT', execution_options={'readonly': readonly})
 
 def get_db_info():
     engine = get_engine(readonly=True)
     with engine.connect() as conn:
+        url = engine.url
         return (f"Connected to {engine.dialect.name} "
                 f"version {'.'.join(str(x) for x in engine.dialect.server_version_info)} "
-                f"database '{os.environ['DB_DATABASE']}' on {os.environ['DB_HOST']} "
-                f"as user '{os.environ['DB_USER']}'")
+                f"database '{url.database}' on {url.host} "
+                f"as user '{url.username}'")
 
 ### Constants ###
 
