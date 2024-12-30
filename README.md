@@ -95,8 +95,8 @@ Add to your `claude_desktop_config.json`:
       ],
       "env": {
         "DB_URL": "mysql+pymysql://root:secret@localhost/databasename",
-        "CLAUDE_LOCAL_FILES_PATH": "/path/to/claude-local-files/files",  // Optional
         "EXECUTE_QUERY_MAX_CHARS": "5000"  // Optional, default 4000
+        "CLAUDE_LOCAL_FILES_PATH": "/path/to/claude-local-files/files",  // Optional
       }
     }
   }
