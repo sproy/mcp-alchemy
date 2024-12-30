@@ -30,10 +30,6 @@ For Data Analysis:
 
 ## API
 
-### Resources
-
-- `database://system`: SQL database operations interface
-
 ### Tools
 
 - **all_table_names**
