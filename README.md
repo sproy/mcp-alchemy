@@ -24,9 +24,19 @@ For Query Assistance:
 - Handle NULL values and dates properly
 
 For Data Analysis:
-- Work with datasets larger than Claude's context window
-- Generate reports and visualizations through [claude-local-files](https://github.com/runekaagaard/claude-local-files)
-- Let Claude analyze complete result sets
+- Work with datasets of any size through smart result truncation
+- Get comprehensive data summaries and statistics
+- Let Claude analyze patterns and trends in your data
+
+## Claude Local Files Integration
+
+When [claude-local-files](https://github.com/runekaagaard/claude-local-files) is configured:
+- Access complete result sets beyond Claude's context window
+- Generate detailed reports and visualizations
+- Perform deep analysis on large datasets
+- Export results for further processing
+
+The integration automatically activates when `CLAUDE_LOCAL_FILES_PATH` is set.
 
 **Note**: The server requires database connection details via environment variables.
 
