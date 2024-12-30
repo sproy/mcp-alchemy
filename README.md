@@ -28,7 +28,13 @@ For Data Analysis:
 - Get comprehensive data summaries and statistics
 - Let Claude analyze patterns and trends in your data
 
-## Claude Local Files Integration
+For Claude Local Files:
+- Access complete result sets beyond Claude's context window
+- Generate detailed reports and visualizations
+- Perform deep analysis on large datasets
+- Export results for further processing
+
+## Implementation Details
 
 When [claude-local-files](https://github.com/runekaagaard/claude-local-files) is configured:
 - Access complete result sets beyond Claude's context window
