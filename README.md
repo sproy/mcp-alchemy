@@ -1,5 +1,7 @@
 # Database MCP Server
 
+UNDER ACTIVE DEVELOPMENT. WORKS GREAT BUT WILL CHANGE :)
+
 Python server implementing Model Context Protocol (MCP) for SQL database operations. Supports any SQLAlchemy compatible database with clean vertical output formatting.
 
 ## Features
