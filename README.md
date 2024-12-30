@@ -1,8 +1,10 @@
-# Database MCP Server
+# MCP Alchemy
 
 UNDER ACTIVE DEVELOPMENT. WORKS GREAT BUT WILL CHANGE :)
 
-Python server implementing Model Context Protocol (MCP) for SQL database operations. Supports any SQLAlchemy compatible database with clean vertical output formatting.
+MCP Alchemy is a Model Context Protocol (MCP) server that gives Claude direct access to your SQL databases. It allows Claude to explore database schemas, execute queries, and analyze large result sets through a clean, consistent interface. Supports any SQLAlchemy-compatible database including PostgreSQL, MySQL, MariaDB, and SQLite.
+
+For handling large result sets that exceed Claude's context window, MCP Alchemy integrates with [claude-local-files](https://github.com/runekaagaard/claude-local-files) to enable Claude to analyze complete datasets and generate reports or visualizations.
 
 ## Features
 
@@ -75,7 +77,7 @@ Python server implementing Model Context Protocol (MCP) for SQL database operati
   ```
   - Features:
     - Smart truncation of large results
-    - Full result set URLs for Claude Desktop
+    - Full result set access via [claude-local-files](https://github.com/runekaagaard/claude-local-files) integration
     - Clean NULL value display
     - ISO formatted dates
     - Clear row separation
@@ -133,8 +135,9 @@ uv venv
 source .venv/bin/activate
 uv pip install -r requirements.txt
 
-# Or install individual packages
-uv pip install sqlalchemy pymysql psycopg2-binary
+# install individual database drivers
+uv pip install pymysql
+uv pip install psycopg2-binary
 ```
 
 3. Add database to claude_desktop_config.json
