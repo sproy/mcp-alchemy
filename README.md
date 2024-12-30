@@ -123,7 +123,21 @@ Add to your `claude_desktop_config.json`:
 git clone https://github.com/runekaagaard/mcp-alchemy.git
 ```
 
-2. Add database to claude_desktop_config.json
+2. Install dependencies using uv:
+```bash
+# Install uv if you haven't already
+pip install uv
+
+# Create and activate virtual environment, install dependencies
+uv venv
+source .venv/bin/activate
+uv pip install -r requirements.txt
+
+# Or install individual packages
+uv pip install sqlalchemy pymysql psycopg2-binary
+```
+
+3. Add database to claude_desktop_config.json
 
 ## License
 
