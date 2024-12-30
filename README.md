@@ -94,11 +94,7 @@ Add to your `claude_desktop_config.json`:
         "server.py"
       ],
       "env": {
-        "DB_ENGINE": "mysql+pymysql",  // or postgresql, sqlite, etc.
-        "DB_HOST": "localhost",
-        "DB_USER": "root",
-        "DB_PASSWORD": "secret",
-        "DB_DATABASE": "databasename",
+        "DB_URL": "mysql+pymysql://root:secret@localhost/databasename",
         "CLAUDE_LOCAL_FILES_PATH": "/path/to/claude-local-files/files",  // Optional
         "EXECUTE_QUERY_MAX_CHARS": "5000"  // Optional, default 4000
       }
@@ -109,16 +105,12 @@ Add to your `claude_desktop_config.json`:
 
 ## Environment Variables
 
-- `DB_ENGINE`: SQLAlchemy engine name (required)
-  - mysql+pymysql
-  - postgresql
-  - sqlite
-  - oracle
-  - mssql
-- `DB_HOST`: Database host (required)
-- `DB_USER`: Database user (required)
-- `DB_PASSWORD`: Database password (optional)
-- `DB_DATABASE`: Database name (required)
+- `DB_URL`: SQLAlchemy [database URL](https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls) (required)
+  Examples:
+  - PostgreSQL: `postgresql://user:password@localhost/dbname`
+  - MySQL: `mysql+pymysql://user:password@localhost/dbname`
+  - MariaDB: `mariadb+pymysql://user:password@localhost/dbname`
+  - SQLite: `sqlite:///path/to/database.db`
 - `CLAUDE_LOCAL_FILES_PATH`: Directory for full result sets (optional)
 - `EXECUTE_QUERY_MAX_CHARS`: Maximum output length (optional, default 4000)
 
