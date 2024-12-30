@@ -1,5 +1,7 @@
 # MCP Alchemy
 
+![MCP Alchemy in action](screenshot.png)
+
 Let Claude be your database expert! MCP Alchemy connects Claude Desktop directly to your databases, allowing it to:
 
 - Help you explore and understand your database structure
