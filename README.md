@@ -1,7 +1,5 @@
 # MCP Alchemy
 
-UNDER ACTIVE DEVELOPMENT. WORKS GREAT BUT WILL CHANGE :)
-
 MCP Alchemy is a Model Context Protocol (MCP) server that gives Claude direct access to your SQL databases. It allows Claude to explore database schemas, execute queries, and analyze large result sets through a clean, consistent interface. Supports any SQLAlchemy-compatible database including PostgreSQL, MySQL, MariaDB, and SQLite.
 
 For handling large result sets that exceed Claude's context window, MCP Alchemy integrates with [claude-local-files](https://github.com/runekaagaard/claude-local-files) to enable Claude to analyze complete datasets and generate reports or visualizations.
