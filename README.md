@@ -132,21 +132,18 @@ Add to your `claude_desktop_config.json`:
 1. Clone repository:
 ```bash
 git clone https://github.com/runekaagaard/mcp-alchemy.git
+cd mcp-alchemy
 ```
 
-2. Install dependencies using uv:
+2. Install using uv:
 ```bash
 # Install uv if you haven't already
-pip install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Create and activate virtual environment, install dependencies
+# Create virtual environment and install the project with all dependencies
 uv venv
 source .venv/bin/activate
-uv pip install -r requirements.txt
-
-# install individual database drivers
-uv pip install pymysql
-uv pip install psycopg2-binary
+uv pip install -e .
 ```
 
 3. Add database to claude_desktop_config.json
