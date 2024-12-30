@@ -44,7 +44,7 @@ def filter_table_names(q: str) -> str:
     return ", ".join(x for x in inspector.get_table_names() if q in x)
 
 @mcp.tool(description=f"Returns schema and relation information for the given tables. {DB_INFO}")
-def get_schema_definitions(table_names: list[str]) -> str:
+def schema_definitions(table_names: list[str]) -> str:
     def format(inspector, table_name):
         columns = inspector.get_columns(table_name)
         foreign_keys = inspector.get_foreign_keys(table_name)

@@ -49,7 +49,7 @@ For Data Analysis:
   Returns: "users, user_roles, user_permissions"
   ```
 
-- **get_schema_definitions**
+- **schema_definitions**
   - Get detailed schema for specified tables
   - Input: `table_names` (string[])
   - Returns table definitions including:
