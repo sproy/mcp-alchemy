@@ -148,6 +148,25 @@ uv pip install -e .
 
 3. Add database to claude_desktop_config.json
 
+## Database Drivers
+
+The following database drivers are included by default:
+- SQLite: Built into Python, no additional installation needed
+- MySQL/MariaDB: Via `pymysql`
+- PostgreSQL: Via `psycopg2-binary`
+
+To use other databases supported by SQLAlchemy, install the appropriate driver:
+```bash
+# Microsoft SQL Server
+uv pip install pymssql
+
+# Oracle
+uv pip install cx_oracle
+
+# Other databases
+# See: https://docs.sqlalchemy.org/en/20/dialects/
+```
+
 ## License
 
 Mozilla Public License Version 2.0 
