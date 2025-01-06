@@ -120,8 +120,10 @@ def execute_query(query: str, params: Optional[dict] = None) -> str:
         with open(os.path.join(CLAUDE_FILES_PATH, file_name), 'w') as f:
             json.dump(data, f)
 
-        return (f"\nFull result set url: https://cdn.jsdelivr.net/pyodide/claude-local-files/{file_name}"
-                " (format: [[row1_value1, row1_value2, ...], [row2_value1, row2_value2, ...], ...]])")
+        return (
+            f"\nFull result set url: https://cdn.jsdelivr.net/pyodide/claude-local-files/{file_name}"
+            " (format: [[row1_value1, row1_value2, ...], [row2_value1, row2_value2, ...], ...]])"
+            " (ALWAYS prefer fetching this url in artifacts instead of hardcoding the values if at all possible)")
 
     try:
         engine = get_engine(readonly=False)
