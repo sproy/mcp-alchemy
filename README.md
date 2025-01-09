@@ -93,7 +93,7 @@ Add to your `claude_desktop_config.json`:
 }
 ```
 
-## Environment Variables
+Environment Variables:
 
 - `DB_URL`: SQLAlchemy [database URL](https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls) (required)
   Examples:
@@ -138,7 +138,7 @@ uv pip install cx_oracle
 # See: https://docs.sqlalchemy.org/en/20/dialects/
 ```
 
-## Implementation Details
+## Claude Local Files
 
 When [claude-local-files](https://github.com/runekaagaard/claude-local-files) is configured:
 
