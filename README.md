@@ -6,45 +6,11 @@ Let Claude be your database expert! MCP Alchemy connects Claude Desktop directly
 
 - Help you explore and understand your database structure
 - Assist in writing and validating SQL queries
+- Displays relationships between tables
 - Analyze large datasets and create reports
-- Map relationships between tables
+- Claude Desktop Can analyse and create artifacts for very large datasets using [claude-local-files](https://github.com/runekaagaard/claude-local-files).
 
-Works with PostgreSQL, MySQL, MariaDB, SQLite, and other SQLAlchemy-compatible databases.
-
-## Key Features
-
-For Database Exploration:
-- Ask Claude about available tables and their relationships
-- Get detailed schema information and foreign key mappings
-- Have Claude explain complex database structures
-
-For Query Assistance:
-- Let Claude write and validate SQL queries
-- Get results in a clean, readable format
-- Handle NULL values and dates properly
-
-For Data Analysis:
-- Work with datasets of any size through smart result truncation
-- Get comprehensive data summaries and statistics
-- Let Claude analyze patterns and trends in your data
-
-For Claude Local Files:
-- Access complete result sets beyond Claude's context window
-- Generate detailed reports and visualizations
-- Perform deep analysis on large datasets
-- Export results for further processing
-
-## Implementation Details
-
-When [claude-local-files](https://github.com/runekaagaard/claude-local-files) is configured:
-- Access complete result sets beyond Claude's context window
-- Generate detailed reports and visualizations
-- Perform deep analysis on large datasets
-- Export results for further processing
-
-The integration automatically activates when `CLAUDE_LOCAL_FILES_PATH` is set.
-
-**Note**: The server requires database connection details via environment variables.
+Works with PostgreSQL, MySQL, MariaDB, SQLite, Oracle, MS SQL Server and a host of other (SQLAlchemy-compatible)[https://docs.sqlalchemy.org/en/20/dialects/] databases.
 
 ## API
 
@@ -182,6 +148,17 @@ uv pip install cx_oracle
 # Other databases
 # See: https://docs.sqlalchemy.org/en/20/dialects/
 ```
+
+## Implementation Details
+
+When [claude-local-files](https://github.com/runekaagaard/claude-local-files) is configured:
+
+- Access complete result sets beyond Claude's context window
+- Generate detailed reports and visualizations
+- Perform deep analysis on large datasets
+- Export results for further processing
+
+The integration automatically activates when `CLAUDE_LOCAL_FILES_PATH` is set.
 
 ## License
 
