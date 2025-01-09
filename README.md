@@ -10,7 +10,7 @@ Let Claude be your database expert! MCP Alchemy connects Claude Desktop directly
 - Analyze large datasets and create reports
 - Claude Desktop Can analyse and create artifacts for very large datasets using [claude-local-files](https://github.com/runekaagaard/claude-local-files).
 
-Works with PostgreSQL, MySQL, MariaDB, SQLite, Oracle, MS SQL Server and a host of other (SQLAlchemy-compatible)[https://docs.sqlalchemy.org/en/20/dialects/] databases.
+Works with PostgreSQL, MySQL, MariaDB, SQLite, Oracle, MS SQL Server and a host of other [SQLAlchemy-compatible](https://docs.sqlalchemy.org/en/20/dialects/) databases.
 
 ## API
 
