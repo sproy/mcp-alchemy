@@ -84,16 +84,9 @@ Add to your `claude_desktop_config.json`:
   "mcpServers": {
     "my_database": {
       "command": "uv",
-      "args": [
-        "--directory",
-        "/path/to/mcp-alchemy",
-        "run",
-        "server.py"
-      ],
+      "args": ["--directory", "/path/to/mcp-alchemy", "run", "server.py"],
       "env": {
         "DB_URL": "mysql+pymysql://root:secret@localhost/databasename",
-        "EXECUTE_QUERY_MAX_CHARS": "5000"  // Optional, default 4000
-        "CLAUDE_LOCAL_FILES_PATH": "/path/to/claude-local-files/files",  // Optional
       }
     }
   }
@@ -116,21 +109,15 @@ Add to your `claude_desktop_config.json`:
 1. Clone repository:
 ```bash
 git clone https://github.com/runekaagaard/mcp-alchemy.git
-cd mcp-alchemy
 ```
 
-2. Install using uv:
+2. Ensure you have uv
 ```bash
 # Install uv if you haven't already
 curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Create virtual environment and install the project with all dependencies
-uv venv
-source .venv/bin/activate
-uv pip install -e .
 ```
 
-3. Add database to claude_desktop_config.json
+3. Add database to claude_desktop_config.json (see above)
 
 ## Database Drivers
 
