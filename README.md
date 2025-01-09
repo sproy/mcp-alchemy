@@ -1,6 +1,6 @@
 # MCP Alchemy
 
-![MCP Alchemy in action](screenshot.png)
+**Status: Works great and is in daily use without any known bugs.**
 
 Let Claude be your database expert! MCP Alchemy connects Claude Desktop directly to your databases, allowing it to:
 
@@ -11,6 +11,8 @@ Let Claude be your database expert! MCP Alchemy connects Claude Desktop directly
 - Claude Desktop Can analyse and create artifacts for very large datasets using [claude-local-files](https://github.com/runekaagaard/claude-local-files).
 
 Works with PostgreSQL, MySQL, MariaDB, SQLite, Oracle, MS SQL Server and a host of other [SQLAlchemy-compatible](https://docs.sqlalchemy.org/en/20/dialects/) databases.
+
+![MCP Alchemy in action](screenshot.png)
 
 ## API
 
