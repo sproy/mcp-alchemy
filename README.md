@@ -149,6 +149,17 @@ When [claude-local-files](https://github.com/runekaagaard/claude-local-files) is
 
 The integration automatically activates when `CLAUDE_LOCAL_FILES_PATH` is set.
 
+## Contributing
+
+Contributions are warmly welcomed! Whether it's bug reports, feature requests, documentation improvements, or code contributions - all input is valuable. Feel free to:
+
+- Open an issue to report bugs or suggest features
+- Submit pull requests with improvements
+- Enhance documentation or share your usage examples
+- Ask questions and share your experiences
+
+The goal is to make database interaction with Claude even better, and your insights and contributions help achieve that.
+
 ## License
 
 Mozilla Public License Version 2.0 
