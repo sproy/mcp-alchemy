@@ -97,13 +97,22 @@ def execute_query(query: str, params: Optional[dict] = None) -> str:
 
     def format_results(columns, rows):
         """Format rows in a clean vertical format"""
-        output = []
+        output = ""
+        curr_size, row_displayed = 0, 0
+
         for i, row in enumerate(rows, 1):
-            output.append(f"{i}. row")
+            line = f"{i}. row\n"
             for col, val in zip(columns, row):
-                output.append(f"{col}: {format_value(val)}")
-            output.append("")
-        return "\n".join(output)
+                line += f"{col}: {format_value(val)}\n"
+            line += "\n"
+            curr_size += len(line)
+
+            if curr_size > EXECUTE_QUERY_MAX_CHARS:
+                break
+            output += line
+            row_displayed = i
+
+        return row_displayed, output
 
     def save_full_results(rows, columns):
         """Save complete result set for Claude if configured"""
@@ -140,16 +149,11 @@ def execute_query(query: str, params: Optional[dict] = None) -> str:
                 return "No rows returned"
 
             # Format results and handle truncation if needed
-            displayed_rows = all_rows
-            output = format_results(columns, displayed_rows)
-
-            while len(output) > EXECUTE_QUERY_MAX_CHARS and len(displayed_rows) > 1:
-                displayed_rows = displayed_rows[:-1]
-                output = format_results(columns, displayed_rows)
+            row_displayed, output = format_results(columns, all_rows)
 
             # Add summary and full results link
             output += f"\nResult: {len(all_rows)} rows"
-            if len(displayed_rows) < len(all_rows):
+            if row_displayed < len(all_rows):
                 output += " (output truncated)"
 
             if full_results := save_full_results(all_rows, columns):
