@@ -10,3 +10,8 @@ dependencies = [
     "pymysql>=1.1.1",
     "sqlalchemy>=2.0.36",
 ]
+[project.scripts]
+mcp-alchemy = "server:main"
+
+[tool.uv]
+package = true

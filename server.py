@@ -163,5 +163,10 @@ def execute_query(query: str, params: Optional[dict] = None) -> str:
     except Exception as e:
         return f"Error: {str(e)}"
 
-if __name__ == "__main__":
+
+def main():
     mcp.run()
+
+
+if __name__ == "__main__":
+    main()
