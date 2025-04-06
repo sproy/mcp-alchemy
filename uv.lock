@@ -193,7 +193,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "mcp", extras = ["cli"], specifier = "===1.2.0rc1" },
+    { name = "mcp", extras = ["cli"], specifier = ">=1.2.0rc1" },
     { name = "psycopg2-binary", specifier = ">=2.9.10" },
     { name = "pymysql", specifier = ">=1.1.1" },
     { name = "sqlalchemy", specifier = ">=2.0.36" },
