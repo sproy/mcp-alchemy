@@ -7,9 +7,9 @@ from sqlalchemy import create_engine, inspect, text
 
 ### Database ###
 
-if os.environ['ORACLE_CLIENT_PATH']:
+if oracle_client_path := os.environ.get('ORACLE_CLIENT_PATH'):
     # Initialize the Oracle Client with the path to the Instant Client libraries
-    oracledb.init_oracle_client(lib_dir=os.environ['ORACLE_CLIENT_PATH'])
+    oracledb.init_oracle_client(lib_dir=oracle_client_path)
     
 target_schema = os.environ['TARGET_SCHEMA']
 
