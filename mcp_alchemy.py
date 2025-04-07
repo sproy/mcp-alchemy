@@ -1,3 +1,4 @@
+import oracledb
 import os, json, hashlib
 from typing import Optional
 from datetime import datetime, date
@@ -5,6 +6,12 @@ from mcp.server.fastmcp import FastMCP
 from sqlalchemy import create_engine, inspect, text
 
 ### Database ###
+
+if os.environ['ORACLE_CLIENT_PATH']:
+    # Initialize the Oracle Client with the path to the Instant Client libraries
+    oracledb.init_oracle_client(lib_dir=os.environ['ORACLE_CLIENT_PATH'])
+    
+target_schema = os.environ['TARGET_SCHEMA']
 
 def get_engine(readonly=True):
     connection_string = os.environ['DB_URL']
@@ -33,7 +40,7 @@ mcp = FastMCP("MCP Alchemy")
 def all_table_names() -> str:
     engine = get_engine()
     inspector = inspect(engine)
-    return ", ".join(inspector.get_table_names())
+    return ", ".join(inspector.get_table_names(schema=target_schema))
 
 @mcp.tool(
     description=f"Return all table names in the database containing the substring 'q' separated by comma. {DB_INFO}"
@@ -41,14 +48,14 @@ def all_table_names() -> str:
 def filter_table_names(q: str) -> str:
     engine = get_engine()
     inspector = inspect(engine)
-    return ", ".join(x for x in inspector.get_table_names() if q in x)
+    return ", ".join(x for x in inspector.get_table_names(schema=target_schema) if q in x)
 
 @mcp.tool(description=f"Returns schema and relation information for the given tables. {DB_INFO}")
 def schema_definitions(table_names: list[str]) -> str:
     def format(inspector, table_name):
-        columns = inspector.get_columns(table_name)
-        foreign_keys = inspector.get_foreign_keys(table_name)
-        primary_keys = set(inspector.get_pk_constraint(table_name)["constrained_columns"])
+        columns = inspector.get_columns(table_name, schema=target_schema)
+        foreign_keys = inspector.get_foreign_keys(table_name, schema=target_schema)
+        primary_keys = set(inspector.get_pk_constraint(table_name, schema=target_schema)["constrained_columns"])
         result = [f"{table_name}:"]
 
         # Process columns
